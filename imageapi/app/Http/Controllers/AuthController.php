@@ -8,8 +8,10 @@ use Exception;
 use Illuminate\Support\Facades\Validator;
 use App\Service\jwtService;
 use App\Models\User;
+use App\Models\Password_reset;
 use Illuminate\Support\Str;
 use App\Http\Requests\UserStoreRequest;
+use App\Http\Requests\EmailRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Storage;
 class AuthController extends Controller
@@ -23,26 +25,19 @@ class AuthController extends Controller
             if($request->hasFile('profile_picture'))
             {
                 $pic = $request->profile_picture;
-                // dd($pic);
-                $allowedfileExtension=['pdf','jpg','png','jpeg'];
-                // $files = $request->profile_picture;
-                // $errors = [];
 
-            // foreach ($pic as $file) {
-                // dd($pic);
+                $allowedfileExtension=['pdf','jpg','png','jpeg'];
+
                 $extension = $pic->getClientOriginalExtension();
 
                 $check = in_array($extension,$allowedfileExtension);
                 if($check) {
-                    // foreach($request->fileName as $mediaFiles) {
-
                         $path = $pic->store('public/profile');
-                        // $imageName = $pic->getClientOriginalName();
-                    // }
+
                 } else {
                     throw new Exception('invalid_file_format');
                 }
-            // }
+
 
                 // $base64_str = substr($pic, strpos($pic, ",")+1);
                 // //decode base64 string
@@ -50,27 +45,34 @@ class AuthController extends Controller
                 // $imageName = Str::random(10) . '.jpg';
                 // Storage::disk('local')->put($imageName, $image);
 
-                // dd($path);
+
                 $data=array_merge(
                     $data,
                     ['profile_picture' =>$path]
                 );
             }
+            else{
+                $path = 'public/profile/default/user.png';
+                $data=array_merge(
+                    $data,
+                    ['profile_picture' =>$path]
+                );
+            }
+
             $user = User::create(array_merge(
                         $data,
                         ['password' =>Hash::make($request->password)]
                     ));
-            // $mail=[
-            //     'name'=>$request->name,
-            //     'info'=>'Press the following link to verify your account',
-            //     'Verification_link'=>url('api/user/verifyMail/'.$request->email)
-            // ];
+            $mail=[
+                'name'=>$request->name,
+                'info'=>'Press the following link to verify your account',
+                'Verification_link'=>url('api/user/verifyMail/'.$request->email)
+            ];
             // $jwt=(new jwtService)->gettokenencode($validator->validated());
             // \Mail::to($request->email)->send(new \App\Mail\NewMail($mail));
-            // dispatch(new \App\Jobs\SendEmailVerify($request->email,$mail));
+            dispatch(new \App\Jobs\SendEmailVerify($request->email,$mail));
             return response()->success([
                 'message' => 'User successfully registered',
-                // 'token'=>$jwt,
                 'user' => new UserResource($user)
             ], 201);
         } catch (Exception $e) {
@@ -96,8 +98,8 @@ class AuthController extends Controller
                 if(isset($authenticate))
                 {
 
-                    // if($authenticate->verify==1)
-                    // {
+                    if($authenticate->verify==1)
+                    {
                         if (Hash::check($user['password'], $authenticate->password)) {
                             $data['name']=$authenticate->name;
                             $data['email']=$authenticate->email;
@@ -110,11 +112,11 @@ class AuthController extends Controller
                         {
                             throw new Exception('Unauthorized');
                         }
-                    // }
-                    // else
-                    // {
-                    //     throw new Exception('Please verify the link first');
-                    // }
+                    }
+                    else
+                    {
+                        throw new Exception('Please verify the link first');
+                    }
 
                 }
                 else
@@ -125,7 +127,7 @@ class AuthController extends Controller
                 return response()->success([
                     'message' => 'User successfully login',
                     'user' => new UserResource($authenticate)
-                ], 201);
+                ], 200);
             } catch (Exception $e) {
                 if ($e instanceof \Firebase\JWT\SignatureInvalidException){
                     return response()->error('Token is Invalid',401);
@@ -142,8 +144,55 @@ class AuthController extends Controller
 
     }
 
-    public function logout(Request $request){
 
-
+    public function forgetPassword(Request $request)
+    {
+        try{
+            if(User::where("email",$request->email)->exists())
+            {
+                $resetPassword = new Password_reset();
+                $resetPassword->email = $request->email;
+                $resetPassword->token = Str::random(10);
+                $resetPassword->save();
+                $data = ['Verification_link'=>url('api/auth/'.$resetPassword->email.'/'.$resetPassword->token)];
+                \Mail::to($request->email)->send(new \App\Mail\ForgetMail($data));
+                // dispatch(new \App\Jobs\SendForgotEmail($request->email,$data));
+                return response()->success("Password reset mail has been sent",200);
+            }
+            else
+            {
+                throw new Exception("Email Does not exist");
+            }
         }
+        catch(Exception $e)
+        {
+            return response()->error($e->getMessage(),500);
+        }
+    }
+
+    public function updatepassword(Request $request,$email,$token)
+    {
+        try{
+        if(Password_reset::where('token',$token)->exists())
+        {
+            $deleteToken = Password_reset::where('token',$token)->first();
+            $deleteToken->delete();
+            // $validated = $request->validated();
+            $user = User::where('email',$email)->first();
+            $validated['password'] = bcrypt($request->password);
+            $user->password =$request->password;
+            $user->save();
+
+            return response()->success("Password Updated",200);
+        }
+        else
+        {
+            return response()->error("Unauthorized",404);
+        }
+           }
+           catch(Exception $e)
+           {
+               return response()->error($e->getMessage(),404);
+           }
+    }
 }

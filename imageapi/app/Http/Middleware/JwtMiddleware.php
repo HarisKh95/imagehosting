@@ -25,34 +25,29 @@ class JwtMiddleware
         // JWT::$leeway = 60;
         try {
             $decoded = (new jwtService)->gettokendecode($request->bearerToken());
-            // $decoded = JWT::decode($request->bearerToken(), new Key($key, 'HS256'));
-            // $decoded_array = (array) $decoded;
-            // $decoded_data = (array) $decoded_array['data'];
+
 
             $user=User::query();
-            $user=$user->where('email',$decoded['email'])->first();
-            // if(isset($user))
-            // {
+            $user=$user->where('email',$decoded['email'])->where('remember_token',$request->bearerToken())->first();
+            if(isset($user))
+            {
 
             //     if($user->verify==1)
             //     {
-            //         if (!Hash::check($decoded['password'], $user->password)) {
-            //             throw new Exception('Not a valid user token');
-            //         }
+                    if (!Hash::check($decoded['password'], $user->password)) {
+                        throw new Exception('Not a valid user token');
+                    }
             //     }
             //     else
             //     {
             //         throw new Exception('Please verify the mail first');
             //     }
-            // }
-            // else
-            // {
-            //     throw new Exception('Not a valid user token');
-            // }
-            if(!isset($user))
-            {
-                throw new Exception('Not a valid user token');
             }
+            else
+            {
+                throw new Exception('Already Logout');
+            }
+
         } catch (Exception $e) {
             if ($e instanceof \Firebase\JWT\SignatureInvalidException){
                 return response()->error('Token is Invalid',401);
