@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'age',
         'profile_picture',
+        'profile_picture_url',
         'password',
         'verify'
     ];
@@ -44,4 +45,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function images()
+    {
+        return $this->hasMany(Image::class);
+    }
 }

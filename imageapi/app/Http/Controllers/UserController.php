@@ -89,31 +89,32 @@ class UserController extends Controller
                 {
                     $pic = $request->profile_picture;
 
-                    $allowedfileExtension=['pdf','jpg','png','jpeg'];
+                    // $allowedfileExtension=['pdf','jpg','png','jpeg'];
 
                     $extension = $pic->getClientOriginalExtension();
-
-                    $check = in_array($extension,$allowedfileExtension);
-                    if($check) {
-                            $path = $pic->store('public/profile');
-
-                    } else {
-                        throw new Exception('invalid_file_format');
-                    }
+                    $imagefile = time().rand().'.'.$extension;
+                    // $check = in_array($extension,$allowedfileExtension);
+                    // if($check) {
+                            // $path = $pic->store('public/profile');
+                            $path = url('/storage/' .$pic->storeAs('profile',$imagefile));
+                    // } else {
+                    //     throw new Exception('invalid_file_format');
+                    // }
                 }
                 else
                 {
                     $pic = $request->profile_picture;
-                    $allowedfileExtension=['pdf','jpg','png','jpeg'];
+                    // $allowedfileExtension=['pdf','jpg','png','jpeg'];
                     $extension = $pic->getClientOriginalExtension();
+                    $imagefile = time().rand().'.'.$extension;
                     Storage::delete($before);
-                    $check = in_array($extension,$allowedfileExtension);
-                    if($check) {
+                    // $check = in_array($extension,$allowedfileExtension);
+                    // if($check) {
                             $path = $pic->store('public/profile');
-
-                    } else {
-                        throw new Exception('invalid_file_format');
-                    }
+                            $url = url('/storage/' .$pic->storeAs('profile',$imagefile));
+                    // } else {
+                    //     throw new Exception('invalid_file_format');
+                    // }
                 }
 
 
@@ -127,7 +128,7 @@ class UserController extends Controller
                 // dd($path);
                 $data=array_merge(
                     $data,
-                    ['profile_picture' =>$path]
+                    ['profile_picture' =>$path,'profile_picture_url' =>$url]
                 );
             }
             // dd($data);

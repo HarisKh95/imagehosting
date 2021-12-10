@@ -22,40 +22,40 @@ class AuthController extends Controller
         try {
             $validator=$request;
             $data=$validator->validated();
-            if($request->hasFile('profile_picture'))
+            if($request->has('profile_picture'))
             {
-                $pic = $request->profile_picture;
+
+                $image = $request->profile_picture;
+                $pos  = strpos($image, ';');
+                $type = explode(':', substr($image, 0, $pos))[1];
+                $ext=explode('/',$type);
+                $image = str_replace('data:image/jpeg;base64,', '', $image);
+                $image = str_replace(' ', '+', $image);
+                $imagefile = time().rand().'.'.$ext[1];
+                $path = public_path().'//storage//profile//'.$imagefile;
+                $url=url('storage/profile/'.$imagefile);
 
                 $allowedfileExtension=['pdf','jpg','png','jpeg'];
-
-                $extension = $pic->getClientOriginalExtension();
-
-                $check = in_array($extension,$allowedfileExtension);
-                if($check) {
-                        $path = $pic->store('public/profile');
-
-                } else {
-                    throw new Exception('invalid_file_format');
+                $check = in_array($ext[1],$allowedfileExtension);
+                if($check)
+                {
+                file_put_contents($path,base64_decode($image));
                 }
-
-
-                // $base64_str = substr($pic, strpos($pic, ",")+1);
-                // //decode base64 string
-                // $image = base64_decode($base64_str);
-                // $imageName = Str::random(10) . '.jpg';
-                // Storage::disk('local')->put($imageName, $image);
-
+                else{
+                    throw new Exception('Invalid image format');
+                }
 
                 $data=array_merge(
                     $data,
-                    ['profile_picture' =>$path]
+                    ['profile_picture' =>$path,'profile_picture_url' =>$url]
                 );
             }
             else{
                 $path = 'public/profile/default/user.png';
+                $url = url('/storage/profile/default/user.png');
                 $data=array_merge(
                     $data,
-                    ['profile_picture' =>$path]
+                    ['profile_picture' =>$path,'profile_picture_url' =>$url]
                 );
             }
 
@@ -68,15 +68,13 @@ class AuthController extends Controller
                 'info'=>'Press the following link to verify your account',
                 'Verification_link'=>url('api/user/verifyMail/'.$request->email)
             ];
-            // $jwt=(new jwtService)->gettokenencode($validator->validated());
-            // \Mail::to($request->email)->send(new \App\Mail\NewMail($mail));
             dispatch(new \App\Jobs\SendEmailVerify($request->email,$mail));
             return response()->success([
                 'message' => 'User successfully registered',
                 'user' => new UserResource($user)
             ], 201);
         } catch (Exception $e) {
-            return response()->error($e->getMessage(),203);
+            return response()->error([$e->getMessage(),$e->getLine()],203);
         }
 
     }
