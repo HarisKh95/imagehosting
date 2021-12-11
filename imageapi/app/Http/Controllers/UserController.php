@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserResource;
 use App\Http\Requests\UpdateRequest;
+use Illuminate\Support\Facades\File;
 use App\Service\jwtService;
 use Illuminate\Support\Facades\Storage;
 use Exception;
@@ -81,57 +82,44 @@ class UserController extends Controller
                 );
             }
 
-            if($request->hasFile('profile_picture'))
+            if($request->has('profile_picture'))
             {
 
                 $before=$user['profile_picture'];
-                if($before=="public/profile/default/user.png")
-                {
-                    $pic = $request->profile_picture;
 
-                    // $allowedfileExtension=['pdf','jpg','png','jpeg'];
-
-                    $extension = $pic->getClientOriginalExtension();
-                    $imagefile = time().rand().'.'.$extension;
-                    // $check = in_array($extension,$allowedfileExtension);
-                    // if($check) {
-                            // $path = $pic->store('public/profile');
-                            $path = url('/storage/' .$pic->storeAs('profile',$imagefile));
-                    // } else {
-                    //     throw new Exception('invalid_file_format');
-                    // }
-                }
-                else
+                if($before!="public/profile/default/user.png")
                 {
-                    $pic = $request->profile_picture;
-                    // $allowedfileExtension=['pdf','jpg','png','jpeg'];
-                    $extension = $pic->getClientOriginalExtension();
-                    $imagefile = time().rand().'.'.$extension;
-                    Storage::delete($before);
-                    // $check = in_array($extension,$allowedfileExtension);
-                    // if($check) {
-                            $path = $pic->store('public/profile');
-                            $url = url('/storage/' .$pic->storeAs('profile',$imagefile));
-                    // } else {
-                    //     throw new Exception('invalid_file_format');
-                    // }
+
+                    File::delete($before);
                 }
 
+                    $image = $request->profile_picture;
+                    $pos  = strpos($image, ';');
+                    $type = explode(':', substr($image, 0, $pos))[1];
+                    $ext=explode('/',$type);
+                    $image = str_replace('data:image/'.$ext[1].'jpeg;base64,', '', $image);
+                    $image = str_replace(' ', '+', $image);
+                    $imagefile = time().rand().'.'.$ext[1];
+                    $path = public_path().'//storage//profile//'.$imagefile;
+                    $url=url('storage/profile/'.$imagefile);
+
+                    $allowedfileExtension=['pdf','jpg','png','jpeg'];
+                    $check = in_array($ext[1],$allowedfileExtension);
+                    if($check)
+                    {
+                    file_put_contents($path,base64_decode($image));
+                    }
+                    else{
+                        throw new Exception('Invalid image format');
+                    }
 
 
-                // $base64_str = substr($pic, strpos($pic, ",")+1);
-                // //decode base64 string
-                // $image = base64_decode($base64_str);
-                // $imageName = Str::random(10) . '.jpg';
-                // Storage::disk('local')->put($imageName, $image);
-
-                // dd($path);
                 $data=array_merge(
                     $data,
                     ['profile_picture' =>$path,'profile_picture_url' =>$url]
                 );
             }
-            // dd($data);
+
 
             $updated = $user->update($data);
             if($updated)

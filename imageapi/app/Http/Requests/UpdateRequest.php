@@ -28,7 +28,8 @@ class UpdateRequest extends FormRequest
             'name' => 'string|between:2,100',
             'email' => 'string|email|max:100|unique:users',
             'age' => 'integer|max:100',
-            'profile_picture' => 'mimes:pdf,jpg,JPG,JPEG,jpeg,png|max:50000',
+            'profile_picture' => 'string',
+            // 'profile_picture' => 'mimes:pdf,jpg,JPG,JPEG,jpeg,png|max:50000',
             'password' => 'string|confirmed|min:6',
         ];
     }
@@ -37,8 +38,7 @@ class UpdateRequest extends FormRequest
     {
         throw new HttpResponseException(response()->json([
             'success'   => false,
-            'message'   => 'Validation errors',
-            'data'      => $validator->errors()
+            'message'   => $validator->errors()
         ]));
     }
 
@@ -53,8 +53,9 @@ class UpdateRequest extends FormRequest
             'email.max' => 'Max number of characters in email is 100!',
             'Age.integer' => 'Age should be integer value!',
             'Age.max' => 'Max number of characters in age is 100!',
-            'profile_picture.mimes' => 'Picture is not in require format!',
-            'profile_picture.max' => 'Picture require size is 50MB!',
+            'profile_picture.string' => 'Picture is not in require base64 string format!',
+            // 'profile_picture.mimes' => 'Picture is not in require format!',
+            // 'profile_picture.max' => 'Picture require size is 50MB!',
             'password.string' => 'Password should be string!',
             'password.confirmed' => 'Please enter confirm password!'
         ];

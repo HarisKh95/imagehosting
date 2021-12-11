@@ -14,9 +14,8 @@ class Image extends Model
         'path',
         'url',
         'extension',
-        'public',
-        'private',
-        'private'
+        'privacy',
+        'hidden'
     ];
 
 

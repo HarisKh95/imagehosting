@@ -16,12 +16,11 @@ class CreateImagesTable extends Migration
         Schema::create('images', function (Blueprint $table) {
             $table->id();
             $table->integer('user_id')->unsigned();
-            $table->string('name');
+            $table->string('name')->nullable();
             $table->string('path')->nullable();
             $table->string('url')->nullable();
-            $table->string('extension');
-            $table->boolean('public')->default(1);
-            $table->boolean('private')->default(1);
+            $table->string('extension')->nullable();
+            $table->boolean('privacy')->default(1);
             $table->boolean('hidden')->default(1);
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();

@@ -29,7 +29,7 @@ class AuthController extends Controller
                 $pos  = strpos($image, ';');
                 $type = explode(':', substr($image, 0, $pos))[1];
                 $ext=explode('/',$type);
-                $image = str_replace('data:image/jpeg;base64,', '', $image);
+                $image = str_replace('data:image/'.$ext[1].'jpeg;base64,', '', $image);
                 $image = str_replace(' ', '+', $image);
                 $imagefile = time().rand().'.'.$ext[1];
                 $path = public_path().'//storage//profile//'.$imagefile;
@@ -143,18 +143,23 @@ class AuthController extends Controller
     }
 
 
-    public function forgetPassword(Request $request)
+    public function forgetPassword(EmailRequest $request)
     {
+
         try{
             if(User::where("email",$request->email)->exists())
             {
-                $resetPassword = new Password_reset();
-                $resetPassword->email = $request->email;
-                $resetPassword->token = Str::random(10);
-                $resetPassword->save();
-                $data = ['Verification_link'=>url('api/auth/'.$resetPassword->email.'/'.$resetPassword->token)];
-                \Mail::to($request->email)->send(new \App\Mail\ForgetMail($data));
-                // dispatch(new \App\Jobs\SendForgotEmail($request->email,$data));
+                $user=User::where("email",$request->email)->first();
+                $pwd = bin2hex(openssl_random_pseudo_bytes(4));
+                $update=User::where("email",$request->email)->update(["password"=>Hash::make($pwd)]);
+                if($update){
+                $data = ['name'=>$user->name,'password'=>$pwd];
+                // \Mail::to($request->email)->send(new \App\Mail\ForgetMail($data));
+                dispatch(new \App\Jobs\SendForgotEmail($request->email,$data));
+                }else{
+                    throw new Exception('Invalid Email for password reset. ');
+                }
+
                 return response()->success("Password reset mail has been sent",200);
             }
             else
@@ -168,29 +173,4 @@ class AuthController extends Controller
         }
     }
 
-    public function updatepassword(Request $request,$email,$token)
-    {
-        try{
-        if(Password_reset::where('token',$token)->exists())
-        {
-            $deleteToken = Password_reset::where('token',$token)->first();
-            $deleteToken->delete();
-            // $validated = $request->validated();
-            $user = User::where('email',$email)->first();
-            $validated['password'] = bcrypt($request->password);
-            $user->password =$request->password;
-            $user->save();
-
-            return response()->success("Password Updated",200);
-        }
-        else
-        {
-            return response()->error("Unauthorized",404);
-        }
-           }
-           catch(Exception $e)
-           {
-               return response()->error($e->getMessage(),404);
-           }
-    }
 }

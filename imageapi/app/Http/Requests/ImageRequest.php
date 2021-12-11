@@ -25,7 +25,10 @@ class ImageRequest extends FormRequest
     public function rules()
     {
         return [
-            'image' => 'mimes:pdf,jpg,jpeg,png',
+            'name'=>'required|string',
+            'image' => 'required|string',
+            'privacy' => 'boolean',
+            'hidden' => 'boolean',
         ];
     }
 
@@ -33,8 +36,7 @@ class ImageRequest extends FormRequest
     {
         throw new HttpResponseException(response()->json([
             'success'   => false,
-            'message'   => 'Validation errors',
-            'data'      => $validator->errors()
+            'message'   => $validator->errors()
         ]));
     }
 
@@ -42,7 +44,7 @@ class ImageRequest extends FormRequest
     public function messages()
     {
         return [
-            'image.mimes' => 'Picture is not in require format!',
+            'image.string' => 'Picture is not in require base64 string format!',
         ];
     }
 }

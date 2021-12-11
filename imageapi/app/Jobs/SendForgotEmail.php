@@ -24,8 +24,9 @@ class SendForgotEmail implements ShouldQueue
      */
     public function __construct($mail,$details)
     {
-        $this->details = $details;
         $this->mail = $mail;
+        $this->details = $details;
+
     }
 
     /**
@@ -35,7 +36,7 @@ class SendForgotEmail implements ShouldQueue
      */
     public function handle()
     {
-        $email = new ForgetMail($this->mail);
-        Mail::to($this->details)->send($email);
+        $email = new ForgetMail($this->details);
+        Mail::to($this->mail)->send($email);
     }
 }
