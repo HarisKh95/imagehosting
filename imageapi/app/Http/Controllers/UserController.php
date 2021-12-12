@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\EmailRequest;
 use App\Models\User;
+use App\Models\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserResource;
@@ -97,7 +99,7 @@ class UserController extends Controller
                     $pos  = strpos($image, ';');
                     $type = explode(':', substr($image, 0, $pos))[1];
                     $ext=explode('/',$type);
-                    $image = str_replace('data:image/'.$ext[1].'jpeg;base64,', '', $image);
+                    $image = str_replace('data:image/'.$ext[1].';base64,', '', $image);
                     $image = str_replace(' ', '+', $image);
                     $imagefile = time().rand().'.'.$ext[1];
                     $path = public_path().'//storage//profile//'.$imagefile;
@@ -112,7 +114,6 @@ class UserController extends Controller
                     else{
                         throw new Exception('Invalid image format');
                     }
-
 
                 $data=array_merge(
                     $data,
@@ -185,4 +186,8 @@ class UserController extends Controller
 
 
     }
+
+
+
+
 }

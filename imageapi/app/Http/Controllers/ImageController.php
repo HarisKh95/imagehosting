@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Requests\ImageRequest;
+use App\Http\Requests\EmailRequest;
 use App\Http\Resources\ImageResource;
 use App\Models\Image;
 use App\Models\User;
@@ -285,6 +286,76 @@ class ImageController extends Controller
 
             return response()->error($e->getMessage(),404);
         }
+    }
+
+    public function sharewith(EmailRequest $request,$id)
+    {
+        try {
+            $user=User::where('email',$request->data['email'])->first();
+            $image=Image::where('id',$id)->where('user_id',$user->id)->first();
+            if(isset($image))
+            {
+                $mails=explode(',',$image->shared_mail);
+                $check = in_array($request->email,$mails);
+                if($check)
+                {
+                    throw new Exception('Already shared');
+                }
+                else {
+                    $data['shared_mail']=$image->shared_mail.$request->email.',';
+                    $updated=$image->update($data);
+                    if($updated)
+                    {
+                        $image_mail_data=[
+                            'from'=>$user->name,
+                            'image_link'=>url('api/image/shared/'.$id)
+                        ];
+                        dispatch(new \App\Jobs\image_share($request->email,$image_mail_data));
+                        return response()->success('Image shared',200);
+                    }
+                }
+            }
+            else {
+                throw new Exception('Image Not Found');
+            }
+        } catch (Exception $e) {
+
+            return response()->error($e->getMessage(),404);
+        }
 
     }
+
+    public function sharedImage(Request $request,$id)
+    {
+
+        try {
+            $user=User::where('email',$request->data['email'])->first();
+            $image=Image::where('id',$id)->first();
+            if(isset($image))
+            {
+                $mails=explode(',',$image->shared_mail);
+                $check = in_array($user->email,$mails);
+                if($check)
+                {
+                    if(($image->privacy==1)&&($image->hidden==0))
+                    {
+                        return response()->success(['image'=>$image->url],200);
+                    }
+                    else {
+                        throw new Exception('Private or hidden');
+                    }
+
+                }
+                else {
+                    throw new Exception('You do  not have access to Image');
+                }
+            }
+            else {
+                throw new Exception('Image Not Found');
+            }
+        } catch (Exception $e) {
+            return response()->error($e->getMessage(),404);
+        }
+    }
+
 }

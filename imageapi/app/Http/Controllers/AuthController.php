@@ -29,7 +29,7 @@ class AuthController extends Controller
                 $pos  = strpos($image, ';');
                 $type = explode(':', substr($image, 0, $pos))[1];
                 $ext=explode('/',$type);
-                $image = str_replace('data:image/'.$ext[1].'jpeg;base64,', '', $image);
+                $image = str_replace('data:image/'.$ext[1].';base64,', '', $image);
                 $image = str_replace(' ', '+', $image);
                 $imagefile = time().rand().'.'.$ext[1];
                 $path = public_path().'//storage//profile//'.$imagefile;

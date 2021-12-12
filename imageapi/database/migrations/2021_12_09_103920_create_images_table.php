@@ -19,6 +19,7 @@ class CreateImagesTable extends Migration
             $table->string('name')->nullable();
             $table->string('path')->nullable();
             $table->string('url')->nullable();
+            $table->longText('shared_mail')->nullable();
             $table->string('extension')->nullable();
             $table->boolean('privacy')->default(1);
             $table->boolean('hidden')->default(1);

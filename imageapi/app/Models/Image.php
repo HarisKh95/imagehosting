@@ -13,6 +13,7 @@ class Image extends Model
         'name',
         'path',
         'url',
+        'shared_mail',
         'extension',
         'privacy',
         'hidden'
