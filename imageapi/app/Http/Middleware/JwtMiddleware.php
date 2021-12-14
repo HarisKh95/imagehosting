@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use App\Service\jwtService;
+use App\Service\JwtService;
 
 use Exception;
 

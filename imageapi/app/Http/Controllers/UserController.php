@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UserResource;
 use App\Http\Requests\UpdateRequest;
 use Illuminate\Support\Facades\File;
-use App\Service\jwtService;
+use App\Service\JwtService;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 

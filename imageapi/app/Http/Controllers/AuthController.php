@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Exception;
 use Illuminate\Support\Facades\Validator;
-use App\Service\jwtService;
+use App\Service\JwtService;
 use App\Models\User;
 use App\Models\Password_reset;
 use Illuminate\Support\Str;
