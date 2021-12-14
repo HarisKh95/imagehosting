@@ -341,6 +341,9 @@ class ImageController extends Controller
                     {
                         return response()->success(['image'=>$image->url],200);
                     }
+                    elseif (($image->privacy==0)&&($image->hidden==0)) {
+                        return response()->success(['image'=>$image->url],200);
+                    }
                     else {
                         throw new Exception('Private or hidden');
                     }
